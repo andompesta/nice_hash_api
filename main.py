@@ -23,14 +23,19 @@ if __name__ == '__main__':
     db = client[args.database_name]
 
 
-
+    time = datetime.now()
     get_version(args.base_url)
-    get_global_current(args.base_url, collection=db['GlobalCurrentStatus'])
+    get_global_current(args.base_url, collection=db['GlobalCurrentStatus'], time=time)
     get_global_24(args.base_url, collection=db['Global24Status'])
-    get_orders_by_algo(args.base_url, collection=db['OrderSHA256'], algo="SHA256", location=0)
-    get_buy_info(args.base_url, collection=db['BuyInfo'])
+    get_orders_by_algo(args.base_url, collection=db['OrderSHA256'], algo="SHA256", location=0, time=time)
+    get_buy_info(args.base_url, collection=db['BuyInfo'], time=time)
+
+
     histrory_orders = get_histrory_orders(db['OrderSHA256'], limit=2)
     pprint_hostory_orders(histrory_orders)
 
     history_current_status = get_global_current_status_by_algo(db['GlobalCurrentStatus'], algo="SHA256")
-    plot_global_current_state(history_current_status)
+    plot_global_current_state(history_current_status["SHA256"])
+
+    multi_history_current_status = get_multi_global_current_status_by_algo(db['GlobalCurrentStatus'], algos=["Scrypt",
+                                                                                                            "SHA256"])

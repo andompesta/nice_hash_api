@@ -4,6 +4,22 @@ from datetime import datetime
 from conf import logger, alg_table
 from pymongo import ReturnDocument
 
+def as_float(obj):
+    """Checks each dict passed to this function if it contains the key "value"
+    Args:
+        obj (dict): The object to decode
+
+    Returns:
+        dict: The new dictionary with changes if necessary
+    """
+    for i, value in obj.items():
+        if isinstance(value, str):
+            try:
+                obj[i] = float(value)
+            except ValueError:
+                pass
+    return obj
+
 
 def get_version(base_url):
     response = requests.get(base_url)
@@ -15,7 +31,7 @@ def get_version(base_url):
         response.raise_for_status()
 
 
-def get_global_current(base_url, collection, location=0):
+def get_global_current(base_url, collection, location=0, time=None):
     '''
     Get current profitability (price) and hashing speed for all algorithms. Refreshed every 30 seconds.
     :param base_url: base url of nicehash's api
@@ -27,9 +43,13 @@ def get_global_current(base_url, collection, location=0):
     url = "{}?method=stats.global.current".format(base_url)
     response = requests.get(url, params=params)
     if response.ok:
-        data = json.loads(response.content)
+        data = json.loads(response.content, object_hook=as_float)
         data = data['result']
-        data['time'] = "{}".format(datetime.now())
+        if time:
+            data['time'] = time.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            data['time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         for stat in data['stats']:
             stat['algo'] = alg_table[stat['algo']]
 
@@ -55,7 +75,7 @@ def get_global_24(base_url, collection):
     response = requests.get(url)
     if response.ok:
         today = datetime.now()
-        data = json.loads(response.content)
+        data = json.loads(response.content, object_hook=as_float)
         data = data['result']
         data['time'] = "{}-{}-{}".format(today.year, today.month, today.day)
         for stat in data['stats']:
@@ -72,7 +92,7 @@ def get_global_24(base_url, collection):
         # error
         response.raise_for_status()
 
-def get_orders_by_algo(base_url, collection, algo, location=0):
+def get_orders_by_algo(base_url, collection, algo, location=0, time=None):
     '''
     Get all orders for certain algorithm. Refreshed every 30 seconds.
     :param base_url: base url of nicehash's api
@@ -88,9 +108,12 @@ def get_orders_by_algo(base_url, collection, algo, location=0):
     response = requests.get(url, params=params)
 
     if response.ok:
-        data = json.loads(response.content)
+        data = json.loads(response.content, object_hook=as_float)
         data = data['result']
-        data['time'] = "{}".format(datetime.now())
+        if time:
+            data['time'] = time.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            data['time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         try:
             curr_state_id = collection.insert_one(data)
@@ -104,9 +127,9 @@ def get_orders_by_algo(base_url, collection, algo, location=0):
         response.raise_for_status()
 
 
-def get_buy_info(base_url, collection):
+def get_buy_info(base_url, collection, time=None):
     '''
-    Get all orders for certain algorithm. Refreshed every 30 seconds.
+    Get needed information for buying hashing power using.
     :param base_url: base url of nicehash's api
     :param collection: where to save the info in the db
     '''
@@ -115,22 +138,26 @@ def get_buy_info(base_url, collection):
     response = requests.get(url)
 
     if response.ok:
-        today = datetime.now()
-        data = json.loads(response.content)
+        data = json.loads(response.content, object_hook=as_float)
         data = data['result']
-        data['time'] = "{}-{}-{}".format(today.year, today.month, today.day)
+        if time:
+            data['time'] = time.strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            data['time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         try:
-            update_doc = collection.find_one_and_update({}, {'$set': {'algorithms': data['algorithms'],
-                                                         'time': data['time'],
-                                                         'down_time': data['down_time'],
-                                                         'static_fee': data['static_fee'],
-                                                         'min_amount': data['min_amount'],
-                                                         'dynamic_fee': data['dynamic_fee']
-                                                         }
-                                                },
-                                           return_document=ReturnDocument.AFTER)
+            curr_state_id = collection.insert_one(data)
+            # update_doc = collection.find_one_and_update({}, {'$set': {'algorithms': data['algorithms'],
+            #                                              'time': data['time'],
+            #                                              'down_time': data['down_time'],
+            #                                              'static_fee': data['static_fee'],
+            #                                              'min_amount': data['min_amount'],
+            #                                              'dynamic_fee': data['dynamic_fee']
+            #                                              }
+            #                                     },
+            #                                return_document=ReturnDocument.AFTER)
             logger.debug(
-                "updated document_id:{} \tin collection:{}".format(update_doc['_id'], collection._Collection__name))
+                "inserted document_id:{} \tin collection:{}".format(curr_state_id, collection._Collection__name))
         except Exception as e:
             logger.error("error in inserting doc: {}".format(data))
             raise e
