@@ -164,3 +164,39 @@ def get_buy_info(base_url, collection, time=None):
     else:
         # error
         response.raise_for_status()
+
+
+def get_personal_orders(base_url, algo, api_id, api_key, collection, location=0):
+    '''
+    Get all orders for certain algorithm owned by the customer. Refreshed every 30 seconds.
+    :param base_url:
+    :param algo: name of the algorithm
+    :param api_id: api_id
+    :param api_key: api_key
+    :param location: 0 for Europe (NiceHash), 1 for USA (WestHash)
+    :return:
+    '''
+    url = "{}?method=orders.get&my".format(base_url)
+    params = {"id": api_id,
+              "key": api_key,
+              "algo": algo,
+              "location": location}
+
+    response = requests.get(url, params=params)
+    if response.ok:
+        data = json.loads(response.content, object_hook=as_float)
+        data = data['result']
+        data['algo'] = algo
+        data['time'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        try:
+            curr_state_id = collection.insert_one(data)
+            logger.debug(
+                "inserted document_id:{} \tin collection:{}".format(curr_state_id, collection._Collection__name))
+        except Exception as e:
+            logger.error("error in inserting doc: {}".format(data))
+            raise e
+        return data
+    else:
+        # error
+        response.raise_for_status()

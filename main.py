@@ -12,6 +12,9 @@ def __pars_args__():
     parser = argparse.ArgumentParser(description='nice_hash_client')
     parser.add_argument('--base_url', type=str, default="https://api.nicehash.com/api", help="base nice_hash_url")
     parser.add_argument("-db_name","--database_name", type=str, default="NiceHash", help="name of the db where to save all the info")
+    parser.add_argument("--api_id", type=str, default="ID418401", help="account id of nicehas")
+    parser.add_argument("--api_key", type=str, default="fcd84015-68a4-3f97-0e0d-1f5f35e2470b",
+                        help="api key of nicehas")
 
     return parser.parse_args()
 
@@ -22,20 +25,4 @@ if __name__ == '__main__':
     args = __pars_args__()
     db = client[args.database_name]
 
-
-    time = datetime.now()
-    get_version(args.base_url)
-    get_global_current(args.base_url, collection=db['GlobalCurrentStatus'], time=time)
-    get_global_24(args.base_url, collection=db['Global24Status'])
-    get_orders_by_algo(args.base_url, collection=db['OrderSHA256'], algo="SHA256", location=0, time=time)
-    get_buy_info(args.base_url, collection=db['BuyInfo'], time=time)
-
-
-    histrory_orders = get_histrory_orders(db['OrderSHA256'], limit=2)
-    pprint_hostory_orders(histrory_orders)
-
-    history_current_status = get_global_current_status_by_algo(db['GlobalCurrentStatus'], algo="SHA256")
-    plot_global_current_state(history_current_status["SHA256"])
-
-    multi_history_current_status = get_multi_global_current_status_by_algo(db['GlobalCurrentStatus'], algos=["Scrypt",
-                                                                                                            "SHA256"])
+    get_personal_orders(args.base_url, "SHA256", args.api_id, args.api_key, collection=db['PersonalOrders'])
