@@ -1,44 +1,26 @@
 import logging
 from bidict import bidict
+from functools import partial
 
+logger = None
 class Singleton:
-    """
-    A non-thread-safe helper class to ease implementing singletons.
-    This should be used as a decorator -- not a metaclass -- to the
-    class that should be a singleton.
-    The decorated class can define one `__init__` function that
-    takes only the `self` argument. Other than that, there are
-    no restrictions that apply to the decorated class.
-    To get the singleton instance, use the `instance` method. Trying
-    to use `__call__` will result in a `TypeError` being raised.
-    Limitations: The decorated class cannot be inherited from.
-    """
+    def __init__(cls, name, bases, dic):
+        super(Singleton, cls).__init__(name, bases, dic)
+        cls.instance = None
 
-    def __init__(self, decorated):
-        self._decorated = decorated
+    def __call__(cls, *args, **kw):
+        if cls.instance is None:
+            cls.instance = super(Singleton, cls).__call__(*args, **kw)
+        return cls.instance
 
-    def instance(self):
-        """
-        Returns the singleton instance. Upon its first call, it creates a
-        new instance of the decorated class and calls its `__init__` method.
-        On all subsequent calls, the already created instance is returned.
-        """
-        try:
-            return self._instance
-        except AttributeError:
-            self._instance = self._decorated()
-            return self._instance
 
-    def __call__(self):
-        raise TypeError('Singletons must be accessed through `instance()`.')
-
-    def __instancecheck__(self, inst):
-        return isinstance(inst, self._decorated)
-
-@Singleton
 class Logger:
-    def __init__(self):
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    __metaclass__ = Singleton
+    def __init__(self, filename, logging_level):
+        if filename:
+            logging.basicConfig(filename="console.log",level=logging_level, format='%(asctime)s - %(levelname)s - %(message)s')
+        else:
+            logging.basicConfig(level=logging_level, format='%(asctime)s - %(levelname)s - %(message)s')
 
     def info(self, msg):
         logging.info(msg)
@@ -50,8 +32,10 @@ class Logger:
         logging.error(msg)
 
 
-logger = Logger.instance()
-
+def create_logger(filename=None, logging_level=logging.DEBUG):
+    global logger
+    logger = Logger(filename=filename, logging_level=logging_level)
+    return logger
 alg_table = bidict({
     0: "Scrypt",
     1: "SHA256",

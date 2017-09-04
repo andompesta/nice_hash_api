@@ -1,10 +1,7 @@
 import os
 import sys
 import argparse
-from rest_full_api.api_lib import *
-from rest_full_api.db_lib import *
-from rest_full_api.plot_lib import *
-from conf import logger
+from conf import create_logger
 from time import sleep
 
 from pymongo import MongoClient
@@ -18,6 +15,7 @@ def __pars_args__():
     parser.add_argument("-db_name","--database_name", type=str, default="NiceHash", help="name of the db where to save all the info")
     parser.add_argument("--api_id", type=str, default="ID418401", help="account id of nicehas")
     parser.add_argument("--api_key", type=str, default="fcd84015-68a4-3f97-0e0d-1f5f35e2470b", help="api key of nicehas")
+    parser.add_argument("-lf", "--logging_file", type=str, default=None, help="logging file")
 
     return parser.parse_args()
 
@@ -26,6 +24,10 @@ def __pars_args__():
 
 if __name__ == '__main__':
     args = __pars_args__()
+    logger = create_logger(filename=args.logging_file)
+    from rest_full_api.api_lib import *
+    from rest_full_api.db_lib import *
+
     db = client[args.database_name]
 
     try:
