@@ -31,14 +31,13 @@ if __name__ == '__main__':
     try:
         logger.info("start process with pid: {}".format(os.getpid()))
         while True:
-            sleep(30)
             time = datetime.now()
             logger.info(time.strftime("%Y-%m-%d %H:%M:%S"))
             get_global_current(args.base_url, collection=db['GlobalCurrentStatus'], time=time)
             get_global_24(args.base_url, collection=db['Global24Status'])
             get_orders_by_algo(args.base_url, collection=db['OrderSHA256'], algo="SHA256", location=0, time=time)
             get_buy_info(args.base_url, collection=db['BuyInfo'], time=time)
-
+            sleep(30 - (datetime.now() - time).seconds)
     except Exception as e:
         logger.error(e)
         raise e
