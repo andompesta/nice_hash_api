@@ -2,6 +2,15 @@ from datetime import datetime
 from conf import logger
 import pandas as pd
 
+def __format_balance_cursor__(query_cursor):
+    ret = {}
+    for balance in query_cursor:
+        time = balance["time"]
+        del balance["time"]
+        ret[datetime.strptime(time, "%Y-%m-%d %H:%M:%S")] = balance
+
+    return pd.DataFrame.from_dict(ret, orient="index")
+
 
 def __format_status_cursor__(query_cursor, algos):
     '''
@@ -105,3 +114,12 @@ def get_multi_global_current_status_by_algo(collection, algos, limit=100):
     return __format_status_cursor__(query_cursor, algos)
 
 
+def get_balance(collection, limit=100):
+    '''
+    Return the last limit balance
+    :param collection: collection from which read the data
+    :param limit: number of timestemp to return
+    :return:
+    '''
+    query_cursor = collection.find().sort([('time', -1)]).limit(limit)
+    return __format_balance_cursor__(query_cursor)
