@@ -31,6 +31,9 @@ class Logger:
     def error(self, msg):
         logging.error(msg)
 
+    def warn(self, msg):
+        logging.warning(msg)
+
 
 def create_logger(filename=None, logging_level=logging.DEBUG):
     global logger

@@ -4,6 +4,7 @@ from datetime import datetime
 from conf import logger, alg_table
 from pymongo import ReturnDocument
 from rest_full_api.api_helper import as_float
+from time import sleep
 
 def get_version(base_url):
     response = requests.get(base_url)
@@ -43,6 +44,11 @@ def get_global_current(base_url, collection, location=0, time=None):
         except Exception as e:
             logger.error("error in inserting doc: {}".format(data))
             raise e
+    elif response.status_code == 404:
+        # error is caused by nice-hash
+        sleep(3)
+        get_global_current(base_url, collection, location, time)
+        logger.warn("get_global_current\turl: {}\treason: {}\tstatus_code:{}".format(response.url, response.reason, response.status_code))
     else:
         #error
         response.raise_for_status()
@@ -145,6 +151,11 @@ def get_buy_info(base_url, collection, time=None):
         except Exception as e:
             logger.error("error in inserting doc: {}".format(data))
             raise e
+    elif response.status_code == 404:
+        # error is caused by nice-hash
+        sleep(3)
+        get_buy_info(base_url, collection, time)
+        logger.warn("get_buy_info\turl: {}\treason: {}\tstatus_code:{}".format(response.url, response.reason, response.status_code))
     else:
         # error
         response.raise_for_status()

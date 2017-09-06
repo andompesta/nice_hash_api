@@ -36,15 +36,19 @@ if __name__ == '__main__':
             time = datetime.now()
             logger.info(time.strftime("%Y-%m-%d %H:%M:%S"))
             get_global_current(args.base_url, collection=db['GlobalCurrentStatus'], time=time)
-            get_global_24(args.base_url, collection=db['Global24Status'])
-            get_orders_by_algo(args.base_url, collection=db['OrderSHA256'], algo="SHA256", location=0, time=time)
+            # get_global_24(args.base_url, collection=db['Global24Status'])
+            sleep(3)
+            # for key, value in alg_table.items():
+            #     get_orders_by_algo(args.base_url, collection=db['Order{}'.format(value)], algo="{}".format(value), location=0, time=time)
+            # sleep(3)
             get_buy_info(args.base_url, collection=db['BuyInfo'], time=time)
-            sleep(30 - (datetime.now() - time).seconds)
+            
+            sleep_time = 30 - (datetime.now() - time).seconds
+            if sleep_time > 0:
+                sleep(sleep_time)
     except Exception as e:
         logger.error(e)
         raise e
     finally:
-        db.close()
-        logger.info("connection close")
         logger.info("End the pocess: {}".format(os.getpid()))
 
