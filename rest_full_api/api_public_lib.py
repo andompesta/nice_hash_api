@@ -44,15 +44,14 @@ def get_global_current(base_url, collection, location=0, time=None):
         except Exception as e:
             logger.error("error in inserting doc: {}".format(data))
             raise e
-    elif response.status_code == 404:
-        # error is caused by nice-hash
-        sleep(3)
-        get_global_current(base_url, collection, location, time)
-        logger.warn("get_global_current\turl: {}\treason: {}\tstatus_code:{}".format(response.url, response.reason, response.status_code))
+        return False
     else:
-        #error
-        response.raise_for_status()
-
+        # error is caused by nice-hash
+        sleep(60)
+        logger.warn("get_global_current\turl: {}\treason: {}\tstatus_code:{}".format(response.url, response.reason,
+                                                                                     response.status_code))
+        # get_global_current(base_url, collection, location, time)
+        return True
 
 def get_global_24(base_url, collection):
     '''
@@ -148,14 +147,13 @@ def get_buy_info(base_url, collection, time=None):
             #                                return_document=ReturnDocument.AFTER)
             logger.debug(
                 "inserted document_id:{} \tin collection:{}".format(curr_state_id, collection._Collection__name))
+            return False
         except Exception as e:
             logger.error("error in inserting doc: {}".format(data))
             raise e
-    elif response.status_code == 404:
-        # error is caused by nice-hash
-        sleep(3)
-        get_buy_info(base_url, collection, time)
-        logger.warn("get_buy_info\turl: {}\treason: {}\tstatus_code:{}".format(response.url, response.reason, response.status_code))
     else:
-        # error
-        response.raise_for_status()
+        # error is caused by nice-hash
+        sleep(60)
+        logger.warn("get_buy_info\turl: {}\treason: {}\tstatus_code:{}".format(response.url, response.reason,
+                                                                               response.status_code))
+        return True

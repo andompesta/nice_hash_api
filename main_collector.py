@@ -35,13 +35,15 @@ if __name__ == '__main__':
         while True:
             time = datetime.now()
             logger.info(time.strftime("%Y-%m-%d %H:%M:%S"))
-            get_global_current(args.base_url, collection=db['GlobalCurrentStatus'], time=time)
+            while get_global_current(args.base_url, collection=db['GlobalCurrentStatus'], time=time):
+                continue
             # get_global_24(args.base_url, collection=db['Global24Status'])
             sleep(3)
             # for key, value in alg_table.items():
             #     get_orders_by_algo(args.base_url, collection=db['Order{}'.format(value)], algo="{}".format(value), location=0, time=time)
             # sleep(3)
-            get_buy_info(args.base_url, collection=db['BuyInfo'], time=time)
+            while get_buy_info(args.base_url, collection=db['BuyInfo'], time=time):
+                continue
             
             sleep_time = 30 - (datetime.now() - time).seconds
             if sleep_time > 0:
