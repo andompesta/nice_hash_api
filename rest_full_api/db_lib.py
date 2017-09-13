@@ -1,6 +1,9 @@
 from datetime import datetime
-from conf import logger
 import pandas as pd
+import logging
+logger = logging.getLogger("my_logger")
+
+
 
 def __format_balance_cursor__(query_cursor):
     ret = {}

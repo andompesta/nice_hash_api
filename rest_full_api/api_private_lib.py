@@ -1,10 +1,14 @@
 import requests
 import json
 from datetime import datetime
-from conf import logger, alg_table
+from conf import alg_table
 from rest_full_api.api_helper import as_float
 from pymongo import ReturnDocument
 from rest_full_api.db_lib import __format_balance_cursor__
+import logging
+logger = logging.getLogger("my_logger")
+
+
 def orders_get(base_url, algo, api_id, api_key, collection, location=0):
     '''
     Get all orders for certain algorithm owned by the customer. Refreshed every 30 seconds.

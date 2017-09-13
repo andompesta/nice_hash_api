@@ -1,10 +1,12 @@
 import requests
+from conf import alg_table
 import json
 from datetime import datetime
-from conf import logger, alg_table
 from pymongo import ReturnDocument
 from rest_full_api.api_helper import as_float
 from time import sleep
+import logging
+logger = logging.getLogger('my_logger')
 
 def get_version(base_url):
     response = requests.get(base_url)
@@ -26,7 +28,7 @@ def get_global_current(base_url, collection, location=0, time=None):
     '''
     params = {'location': location}
     url = "{}?method=stats.global.current".format(base_url)
-    response = requests.get(url, params=params)
+    response = requests.get(url, params=params, timeout=10)
     if response.ok:
         data = json.loads(response.content, object_hook=as_float)
         data = data['result']
@@ -46,12 +48,8 @@ def get_global_current(base_url, collection, location=0, time=None):
             raise e
         return False
     else:
-        # error is caused by nice-hash
-        sleep(60)
-        logger.warn("get_global_current\turl: {}\treason: {}\tstatus_code:{}".format(response.url, response.reason,
-                                                                                     response.status_code))
-        # get_global_current(base_url, collection, location, time)
-        return True
+        response.raise_for_status()
+
 
 def get_global_24(base_url, collection):
     '''
@@ -61,7 +59,7 @@ def get_global_24(base_url, collection):
     :return:
     '''
     url = "{}?method=stats.global.24h".format(base_url)
-    response = requests.get(url)
+    response = requests.get(url, timeout=10)
     if response.ok:
         today = datetime.now()
         data = json.loads(response.content, object_hook=as_float)
@@ -75,10 +73,11 @@ def get_global_24(base_url, collection):
             logger.debug(
                 "inserted document_id:{} \tin collection:{}".format(curr_state_id, collection._Collection__name))
         except Exception as e:
+            # catch mongodb errors
             logger.error("error in inserting doc: {}".format(data))
             raise e
+        return False
     else:
-        # error
         response.raise_for_status()
 
 def get_orders_by_algo(base_url, collection, algo, location=0, time=None):
@@ -94,8 +93,7 @@ def get_orders_by_algo(base_url, collection, algo, location=0, time=None):
               'location': location}
 
     url = "{}?method=orders.get".format(base_url)
-    response = requests.get(url, params=params)
-
+    response = requests.get(url, timeout=10, params=params)
     if response.ok:
         data = json.loads(response.content, object_hook=as_float)
         data = data['result']
@@ -111,8 +109,8 @@ def get_orders_by_algo(base_url, collection, algo, location=0, time=None):
         except Exception as e:
             logger.error("error in inserting doc: {}".format(data))
             raise e
+        return False
     else:
-        # error
         response.raise_for_status()
 
 
@@ -124,7 +122,7 @@ def get_buy_info(base_url, collection, time=None):
     '''
 
     url = "{}?method=buy.info".format(base_url)
-    response = requests.get(url)
+    response = requests.get(url, timeout=10)
 
     if response.ok:
         data = json.loads(response.content, object_hook=as_float)
@@ -152,8 +150,4 @@ def get_buy_info(base_url, collection, time=None):
             logger.error("error in inserting doc: {}".format(data))
             raise e
     else:
-        # error is caused by nice-hash
-        sleep(60)
-        logger.warn("get_buy_info\turl: {}\treason: {}\tstatus_code:{}".format(response.url, response.reason,
-                                                                               response.status_code))
-        return True
+        response.raise_for_status()
